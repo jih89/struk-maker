@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator Struk Kasir Jajan Roti</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        .kertas-struk {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #FDFBE3;
+            color: #000;
+            width: 340px;
+            margin: 0 auto;
+            position: relative;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+            letter-spacing: 0.5px;
+            line-height: 1.4;
+        }
+
+        /* Untuk gerigi struk */
+        .kertas-struk::before,
+        .kertas-struk::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background-repeat: repeat-x;
+            background-size: 10px 5px;
+            z-index: 10;
+        }
+
+        .kertas-struk::before {
+            top: -4px;
+            background-image: var(--svg-top);
+        }
+
+        .kertas-struk::after {
+            bottom: -4px;
+            background-image: var(--svg-bottom);
+        }
+
+        .garis-putus {
+            margin: 10px 0;
+            overflow: hidden;
+            white-space: nowrap;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .tabel-struk {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .tabel-struk td {
+            vertical-align: top;
+            padding: 2px 0;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row gap-8">
+
+        <div class="w-full md:w-1/2 bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-bold mb-6 text-center">Struk Maker Jajan Roti</h2>
+
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-semibold">Nama Customer</label>
+                    <input type="text" id="input-customer" class="w-full border p-2 rounded" value="Imam"
+                        oninput="updateStruk()">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold">Tanggal & Waktu</label>
+                    <input type="text" id="input-tanggal" class="w-full border p-2 rounded" value="24-05-2023 16:45"
+                        oninput="handleTanggalInput()">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-sm font-semibold">Warna Latar Struk</label>
+                    <select id="input-warna" class="w-full border p-2 rounded" onchange="updateStruk()">
+                        <option value="#FDFBE3" selected>Kuning Pudar (Bawaan)</option>
+                        <option value="#FFFFFF">Putih Kertas</option>
+                    </select>
+                </div>
+            </div>
+
+            <h3 class="font-bold mb-2 mt-6">Daftar Item</h3>
+            <div id="item-container" class="space-y-2 mb-4">
+            </div>
+            <button onclick="tambahItem()" class="bg-blue-500 text-white px-4 py-2 rounded text-sm w-full mb-6">+ Tambah
+                Item</button>
+
+            <h3 class="font-bold mb-2">Pembayaran</h3>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-semibold">Ongkir (Rp)</label>
+                    <input type="number" id="input-ongkir" class="w-full border p-2 rounded" value="0"
+                        oninput="updateStruk()">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold">Uang Tunai (Rp)</label>
+                    <input type="number" id="input-tunai" class="w-full border p-2 rounded" value=""
+                        oninput="updateStruk()">
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full md:w-1/2 flex flex-col items-center">
+            <h2 class="text-xl font-bold mb-4">Pratinjau</h2>
+
+            <div id="area-struk-wrapper" class="py-6 px-2 overflow-visible" style="background-color: transparent;">
+                <div id="area-struk" class="kertas-struk px-6 pb-6 pt-4 text-sm relative">
+
+                    <div class="flex justify-center mb-1">
+                        <img src="logo.png" alt="Logo Jajan Roti" class="w-[120px] object-contain">
+                    </div>
+
+                    <table class="tabel-struk mb-2">
+                        <tr>
+                            <td style="width: 30%;">Tanggal</td>
+                            <td style="width: 5%;">:</td>
+                            <td id="struk-tanggal" class="text-right">24-05-2023 16:45</td>
+                        </tr>
+                        <tr>
+                            <td>Customer</td>
+                            <td>:</td>
+                            <td id="struk-customer" class="text-right">Hafiz</td>
+                        </tr>
+                    </table>
+
+                    <div class="garis-putus">
+                        --------------------------------------------------------------------------------------------------
+                    </div>
+
+                    <table class="tabel-struk" id="struk-items-table">
+                    </table>
+
+                    <div class="garis-putus">
+                        --------------------------------------------------------------------------------------------------
+                    </div>
+
+                    <table class="tabel-struk">
+                        <tr>
+                            <td>Subtotal</td>
+                            <td id="struk-subtotal" class="text-right">0</td>
+                        </tr>
+                        <tr>
+                            <td>Ongkir</td>
+                            <td id="struk-ongkir" class="text-right">0</td>
+                        </tr>
+                        <tr style="font-weight: bold; font-size: 1.1em;">
+                            <td>Total</td>
+                            <td id="struk-total" class="text-right">0</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="height: 10px;"></td>
+                        </tr>
+                        <tr>
+                            <td>TUNAI</td>
+                            <td id="struk-tunai" class="text-right">0</td>
+                        </tr>
+                        <tr>
+                            <td>Kembalian</td>
+                            <td id="struk-kembalian" class="text-right">0</td>
+                        </tr>
+                    </table>
+
+                    <div class="garis-putus mt-4">
+                        --------------------------------------------------------------------------------------------------
+                    </div>
+                    <div class="text-center text-sm mt-2">** Terima Kasih **</div>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-4 mt-6">
+                <button id="btn-download" onclick="downloadStruk()"
+                    class="bg-green-600 text-white px-6 py-2 rounded shadow hover:bg-green-700 transition-colors">Download
+                    Gambar</button>
+                <button id="btn-share" onclick="shareStruk()"
+                    class="bg-gray-800 text-white px-6 py-2 rounded shadow hover:bg-gray-900 transition-colors">Share /
+                    Bagikan</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let items = [
+            { id: 1, nama: "Aneka Roti", qty: 1, harga: 6000 },
+            { id: 2, nama: "Roti Tawar", qty: 1, harga: 20000 },
+            { id: 3, nama: "Selai Kaya", qty: 1, harga: 50000 }
+        ];
+
+        const formatRp = (angka) => {
+            return new Intl.NumberFormat('id-ID').format(angka);
+        };
+
+        let isTanggalManual = false;
+
+        function handleTanggalInput() {
+            isTanggalManual = document.getElementById('input-tanggal').value.trim() !== '';
+            updateStruk();
+        }
+
+        function updateWaktuSekarang() {
+            if (isTanggalManual) return;
+            const now = new Date();
+            const tgl = String(now.getDate()).padStart(2, '0');
+            const bln = String(now.getMonth() + 1).padStart(2, '0');
+            const thn = now.getFullYear();
+            const jam = String(now.getHours()).padStart(2, '0');
+            const mnt = String(now.getMinutes()).padStart(2, '0');
+            const strValue = `${tgl}-${bln}-${thn} ${jam}:${mnt}`;
+
+            document.getElementById('input-tanggal').value = strValue;
+            document.getElementById('struk-tanggal').innerText = strValue;
+        }
+
+        function renderFormItems() {
+            const container = document.getElementById('item-container');
+            container.innerHTML = '';
+            items.forEach((item, index) => {
+                container.innerHTML += `
+                    <div class="flex gap-2 items-center">
+                        <input type="text" class="w-1/2 border p-2 rounded text-sm" value="${item.nama}" oninput="updateData(${index}, 'nama', this.value)">
+                        <input type="number" class="w-1/6 border p-2 rounded text-sm" value="${item.qty}" oninput="updateData(${index}, 'qty', this.value)">
+                        <input type="number" class="w-1/3 border p-2 rounded text-sm" value="${item.harga}" oninput="updateData(${index}, 'harga', this.value)">
+                        <button onclick="hapusItem(${index})" class="text-red-500 font-bold bg-red-100 px-2 rounded hover:bg-red-200">X</button>
+                    </div>
+                `;
+            });
+            updateStruk();
+        }
+
+        function updateData(index, key, value) {
+            items[index][key] = key === 'nama' ? value : Number(value);
+            updateStruk();
+        }
+
+        function tambahItem() {
+            items.push({ id: Date.now(), nama: "Item Baru", qty: 1, harga: 10000 });
+            renderFormItems();
+        }
+
+        function hapusItem(index) {
+            items.splice(index, 1);
+            renderFormItems();
+        }
+
+        function updateStruk() {
+            document.getElementById('struk-tanggal').innerText = document.getElementById('input-tanggal').value;
+            document.getElementById('struk-customer').innerText = document.getElementById('input-customer').value;
+
+            const bgColor = document.getElementById('input-warna').value;
+            const kertas = document.getElementById('area-struk');
+            kertas.style.backgroundColor = bgColor;
+
+            const svgTop = `<svg width="10" height="5" viewBox="0 0 10 5" xmlns="http://www.w3.org/2000/svg"><polygon points="0,5 5,0 10,5" fill="${bgColor}"/></svg>`;
+            const svgBottom = `<svg width="10" height="5" viewBox="0 0 10 5" xmlns="http://www.w3.org/2000/svg"><polygon points="0,0 5,5 10,0" fill="${bgColor}"/></svg>`;
+
+            kertas.style.setProperty('--svg-top', `url('data:image/svg+xml;utf8,${encodeURIComponent(svgTop)}')`);
+            kertas.style.setProperty('--svg-bottom', `url('data:image/svg+xml;utf8,${encodeURIComponent(svgBottom)}')`);
+
+            const strukItemsTable = document.getElementById('struk-items-table');
+            strukItemsTable.innerHTML = '';
+            let subtotal = 0;
+
+            items.forEach(item => {
+                const totalHargaItem = item.qty * item.harga;
+                subtotal += totalHargaItem;
+                strukItemsTable.innerHTML += `
+                    <tr>
+                        <td colspan="2" style="padding-top: 5px; font-weight: bold;">${item.nama}</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #333;">${item.qty} x ${formatRp(item.harga)}</td>
+                        <td class="text-right">${formatRp(totalHargaItem)}</td>
+                    </tr>
+                `;
+            });
+
+            const nominalOngkir = Number(document.getElementById('input-ongkir').value);
+            const total = subtotal + nominalOngkir;
+
+            const tunaiInput = document.getElementById('input-tunai');
+            if (document.activeElement !== tunaiInput) {
+                tunaiInput.value = total;
+            }
+
+            const tunai = Number(tunaiInput.value);
+            const kembalian = tunai - total;
+
+            document.getElementById('struk-subtotal').innerText = formatRp(subtotal);
+            document.getElementById('struk-ongkir').innerText = formatRp(nominalOngkir);
+            document.getElementById('struk-total').innerText = formatRp(total);
+            document.getElementById('struk-tunai').innerText = formatRp(tunai);
+            document.getElementById('struk-kembalian').innerText = formatRp(kembalian);
+        }
+
+        function downloadStruk() {
+            updateWaktuSekarang();
+            const btn = document.getElementById('btn-download');
+            const originalText = btn.innerText;
+            btn.innerText = "Memproses...";
+            btn.disabled = true;
+
+            const strukWrapper = document.getElementById('area-struk-wrapper');
+
+            html2canvas(strukWrapper, {
+                scale: 3,
+                backgroundColor: null,
+                useCORS: true,
+                allowTaint: true // Mengizinkan render gambar lokal
+            }).then(canvas => {
+                try {
+                    const link = document.createElement('a');
+                    link.download = 'struk-jajan-roti.png';
+                    link.href = canvas.toDataURL("image/png");
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch (err) {
+                    console.error(err);
+                    alert("Gagal otomatis, buka di tab baru...");
+                    window.open(canvas.toDataURL("image/png"), '_blank');
+                }
+            }).finally(() => {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            });
+        }
+
+        function shareStruk() {
+            updateWaktuSekarang();
+            const btn = document.getElementById('btn-share');
+            const originalText = btn.innerText;
+            btn.innerText = "Memproses...";
+            btn.disabled = true;
+
+            const strukWrapper = document.getElementById('area-struk-wrapper');
+
+            html2canvas(strukWrapper, {
+                scale: 3,
+                backgroundColor: null,
+                useCORS: true,
+                allowTaint: true
+            }).then(canvas => {
+                canvas.toBlob(blob => {
+                    const file = new File([blob], "struk-jajan-roti.png", { type: "image/png" });
+
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        navigator.share({
+                            title: 'Struk Kasir Jajan Roti',
+                            text: 'Berikut adalah struk transaksi Anda.',
+                            files: [file]
+                        }).catch(err => console.log("Gagal/Batal share:", err));
+                    } else {
+                        alert("Browser Anda tidak mendukung fitur Share. Silakan gunakan tombol Download.");
+                    }
+                }, 'image/png');
+            }).finally(() => {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            });
+        }
+
+        // Inisialisasi awal
+        updateWaktuSekarang();
+        renderFormItems();
+    </script>
+</body>
+
+</html>
