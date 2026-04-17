@@ -309,13 +309,13 @@ function buildReceiptCanvas() {
     }
 
     h += 2 * 18;       // tanggal + customer
-    h += 30;           // dash
+    h += 24;           // dash
     rows.forEach(() => { h += 18 + 18; }); // item name + qty line
-    h += 30;           // dash
+    h += 24;           // dash
     h += 18 + 18 + 22; // subtotal ongkir total
     h += 10;
     h += 18 + 18;      // tunai kembalian
-    h += 30;           // dash
+    h += 24;           // dash
     h += 22 + 12;      // terima kasih + bottom pad
 
     h += TEETH + PAD_V; // bottom
@@ -455,8 +455,8 @@ function buildReceiptCanvas() {
             line += '-';
         }
         
-        ctx.fillText(line, PAD_X, y + 8);
-        return y + 30;
+        ctx.fillText(line, PAD_X, y + 2);
+        return y + 24;
     }
 }
 
